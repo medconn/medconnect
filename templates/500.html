@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error del servidor - MedConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #DC3545;
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .error-message {
+            font-size: 2rem;
+            color: #333;
+            margin: 1rem 0;
+        }
+        
+        .error-description {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background-color: #5D3E8F;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background-color: #4A2E7A;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: #5D3E8F;
+            padding: 1rem 2rem;
+            border: 2px solid #5D3E8F;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5D3E8F;
+            color: white;
+        }
+        
+        .medical-icon {
+            font-size: 4rem;
+            color: #DC3545;
+            margin-bottom: 1rem;
+        }
+        
+        .help-section {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            max-width: 600px;
+        }
+        
+        .help-section h3 {
+            color: #5D3E8F;
+            margin-bottom: 1rem;
+        }
+        
+        .help-section ul {
+            text-align: left;
+            color: #666;
+        }
+        
+        .help-section li {
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+            
+            .error-message {
+                font-size: 1.5rem;
+            }
+            
+            .error-description {
+                font-size: 1rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .help-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MedConnect Logo">
+                    <span>MedConnect</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="error-container">
+            <div class="medical-icon">⚕️</div>
+            <h1 class="error-code">500</h1>
+            <h2 class="error-message">Error interno del servidor</h2>
+            <p class="error-description">
+                Lo sentimos, ha ocurrido un error técnico en nuestros servidores. 
+                Nuestro equipo técnico ha sido notificado y está trabajando para solucionarlo.
+            </p>
+            
+            <div class="error-actions">
+                <a href="{{ url_for('index') }}" class="btn-primary">
+                    🏠 Ir al Inicio
+                </a>
+                <a href="javascript:location.reload()" class="btn-secondary">
+                    🔄 Intentar de nuevo
+                </a>
+                <a href="javascript:history.back()" class="btn-secondary">
+                    ← Volver Atrás
+                </a>
+            </div>
+            
+            <div class="help-section">
+                <h3>¿Qué puede hacer mientras tanto?</h3>
+                <ul>
+                    <li>Espere unos minutos e intente nuevamente</li>
+                    <li>Verifique su conexión a internet</li>
+                    <li>Intente acceder desde la página principal</li>
+                    <li>Si el problema persiste, contacte a soporte técnico</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer style="margin-top: auto; padding: 2rem; text-align: center; background-color: #f8f9fa; color: #666;">
+        <p>&copy; 2024 MedConnect. Todos los derechos reservados.</p>
+        <p>Para soporte técnico: <strong>soporte@medconnect.cl</strong></p>
+    </footer>
+</body>
+</html> 

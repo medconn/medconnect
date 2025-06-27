@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - MedConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .register-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(93, 62, 143, 0.15);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .register-header h1 {
+            color: #5D3E8F;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #5D3E8F;
+            box-shadow: 0 0 0 3px rgba(93, 62, 143, 0.1);
+        }
+
+        .user-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .user-type-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .user-type-option:hover {
+            border-color: #5D3E8F;
+            background: #f8f6ff;
+        }
+
+        .user-type-option.selected {
+            border-color: #5D3E8F;
+            background: #5D3E8F;
+            color: white;
+        }
+
+        .user-type-option h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.3em;
+        }
+
+        .user-type-option p {
+            margin: 0;
+            font-size: 0.95em;
+            opacity: 0.8;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #5D3E8F 0%, #7B5FAF 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.3em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(93, 62, 143, 0.3);
+        }
+
+        .register-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .login-link a {
+            color: #5D3E8F;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .password-strength {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .strength-weak { color: #dc3545; }
+        .strength-medium { color: #ffc107; }
+        .strength-strong { color: #28a745; }
+
+        @media (max-width: 768px) {
+            .register-container {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .user-type-selector {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>🏥 Crear Cuenta</h1>
+            <p>Únete a MedConnect y gestiona tu salud de manera fácil y segura</p>
+        </div>
+
+        {% if message %}
+            <div class="alert {{ 'alert-success' if success else 'alert-error' }}">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <form id="registerForm" method="POST">
+            <!-- Tipo de Usuario -->
+            <div class="form-group">
+                <label>Tipo de Usuario</label>
+                <div class="user-type-selector">
+                    <div class="user-type-option" data-type="paciente">
+                        <h3>👤 Paciente</h3>
+                        <p>Gestiona tu historial médico</p>
+                    </div>
+                    <div class="user-type-option" data-type="profesional">
+                        <h3>👨‍⚕️ Profesional</h3>
+                        <p>Atiende a tus pacientes</p>
+                    </div>
+                </div>
+                <input type="hidden" name="tipo_usuario" id="tipo_usuario" required>
+            </div>
+
+            <!-- Información Personal -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nombre">Nombre *</label>
+                    <input type="text" id="nombre" name="nombre" required 
+                           placeholder="Ej: María">
+                </div>
+                <div class="form-group">
+                    <label for="apellido">Apellido *</label>
+                    <input type="text" id="apellido" name="apellido" required 
+                           placeholder="Ej: González">
+                </div>
+            </div>
+
+            <!-- Email y Teléfono -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required 
+                           placeholder="ejemplo@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono" 
+                           placeholder="+56912345678">
+                </div>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="form-group">
+                <label for="password">Contraseña *</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Mínimo 6 caracteres">
+                <div id="passwordStrength" class="password-strength"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirmar Contraseña *</label>
+                <input type="password" id="confirm_password" name="confirm_password" required 
+                       placeholder="Repite tu contraseña">
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento">
+                </div>
+                <div class="form-group">
+                    <label for="genero">Género</label>
+                    <select id="genero" name="genero">
+                        <option value="">Seleccionar...</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Otro">Otro</option>
+                        <option value="Prefiero no decir">Prefiero no decir</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dirección -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="direccion">Dirección</label>
+                    <input type="text" id="direccion" name="direccion" 
+                           placeholder="Calle y número">
+                </div>
+                <div class="form-group">
+                    <label for="ciudad">Ciudad</label>
+                    <input type="text" id="ciudad" name="ciudad" 
+                           placeholder="Santiago">
+                </div>
+            </div>
+
+            <button type="submit" class="register-btn" id="submitBtn">
+                Crear Cuenta
+            </button>
+        </form>
+
+        <div class="login-link">
+            <p>¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Inicia Sesión</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Selector de tipo de usuario
+        document.querySelectorAll('.user-type-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remover selección anterior
+                document.querySelectorAll('.user-type-option').forEach(opt => 
+                    opt.classList.remove('selected'));
+                
+                // Seleccionar actual
+                this.classList.add('selected');
+                document.getElementById('tipo_usuario').value = this.dataset.type;
+            });
+        });
+
+        // Validación de contraseña
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (password.length === 0) {
+                strengthDiv.textContent = '';
+                return;
+            }
+            
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 6) strength++;
+            else feedback.push('al menos 6 caracteres');
+            
+            if (/[A-Za-z]/.test(password)) strength++;
+            else feedback.push('una letra');
+            
+            if (/[0-9]/.test(password)) strength++;
+            else feedback.push('un número');
+            
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            if (strength <= 1) {
+                strengthDiv.textContent = `Débil - Necesita: ${feedback.join(', ')}`;
+                strengthDiv.className = 'password-strength strength-weak';
+            } else if (strength <= 2) {
+                strengthDiv.textContent = 'Regular - Considera agregar símbolos';
+                strengthDiv.className = 'password-strength strength-medium';
+            } else {
+                strengthDiv.textContent = '¡Fuerte!';
+                strengthDiv.className = 'password-strength strength-strong';
+            }
+        });
+
+        // Validación de formulario
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const tipoUsuario = document.getElementById('tipo_usuario').value;
+            
+            if (!tipoUsuario) {
+                alert('Por favor selecciona el tipo de usuario');
+                e.preventDefault();
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                alert('Las contraseñas no coinciden');
+                e.preventDefault();
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                e.preventDefault();
+                return;
+            }
+            
+            // Deshabilitar botón durante el envío
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Creando cuenta...';
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedConnect - Panel de Profesional</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="professional-styles.css">
+    <style>
+        /* Estilos para el mensaje de bienvenida */
+        .welcome-toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 350px;
+            animation: slideInRight 0.5s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .welcome-toast .toast-body {
+            background: linear-gradient(135deg, #3a86ff 0%, #5d4aff 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(58, 134, 255, 0.3);
+        }
+        
+        .welcome-avatar {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Mensaje de bienvenida temporal -->
+    {% if just_logged_in %}
+    <div class="welcome-toast" id="welcomeToast">
+        <div class="toast-body d-flex align-items-center">
+            <div class="welcome-avatar">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div>
+                <h5 class="mb-1">¡Bienvenid{{ 'o' if user and user.genero == 'Masculino' else 'a' }}!</h5>
+                <p class="mb-0">{{ 'Dr.' if user and user.genero == 'Masculino' else 'Dra.' }} {{ user.nombre if user else 'Usuario' }}, sesión iniciada exitosamente</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 fixed-top shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="images/logo.png" alt="MedConnect Logo" height="35" class="me-2">
+                <span class="fw-bold">MedConnect</span>
+            </a>
+            
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown no-arrow mx-1">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell fa-fw"></i>
+                        <span class="badge badge-counter bg-danger">3</span>
+                    </a>
+                    <div class="dropdown-list dropdown-menu dropdown-menu-end shadow" aria-labelledby="alertsDropdown">
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-bell me-2"></i> Notificaciones
+                        </h6>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="icon-circle bg-primary">
+                                    <i class="fas fa-user-clock text-white"></i>
+                            </div>
+                            <div>
+                                <div class="small text-gray-500">Hace 5 minutos</div>
+                                <span class="fw-semibold">Nueva solicitud de atención de María González</span>
+                            </div>
+                        </a>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="icon-circle bg-success">
+                                    <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div>
+                                <div class="small text-gray-500">Hace 2 horas</div>
+                                <span class="fw-semibold">Recibiste una nueva evaluación de 5 estrellas</span>
+                            </div>
+                        </a>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="icon-circle bg-warning">
+                                    <i class="fas fa-calendar-alt text-white"></i>
+                            </div>
+                            <div>
+                                <div class="small text-gray-500">Ayer</div>
+                                <span class="fw-semibold">Recordatorio: 3 citas programadas mañana</span>
+                            </div>
+                        </a>
+                        <a class="dropdown-item text-center small text-primary fw-bold py-3" href="#">Ver todas las notificaciones</a>
+                    </div>
+                </li>
+                
+                <li class="nav-item dropdown no-arrow mx-1">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-envelope fa-fw"></i>
+                        <span class="badge badge-counter bg-danger">7</span>
+                    </a>
+                    <div class="dropdown-list dropdown-menu dropdown-menu-end shadow" aria-labelledby="messagesDropdown">
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-envelope me-2"></i> Mensajes
+                        </h6>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                            <div class="patient-avatar-sm me-3">
+                                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                    <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                        <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                    </svg>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">María González</div>
+                                <div class="text-truncate">Hola Dr. Carlos, ¿en cuánto tiempo llegaría a mi domicilio?</div>
+                                <div class="small text-muted"><i class="fas fa-clock me-1"></i> Hace 5 minutos</div>
+                            </div>
+                        </a>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                            <div class="patient-avatar-sm me-3">
+                                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                    <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                        <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                    </svg>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Pedro Soto</div>
+                                <div class="text-truncate">¿Podemos reagendar mi sesión para mañana en la tarde?</div>
+                                <div class="small text-muted"><i class="fas fa-clock me-1"></i> Hace 1 hora</div>
+                            </div>
+                        </a>
+                        <a class="dropdown-item text-center small text-primary fw-bold py-3" href="#">Ver todos los mensajes</a>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown no-arrow">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <span class="d-none d-lg-inline text-gray-600 small me-2">{{ 'Dr.' if user and user.genero == 'Masculino' else 'Dra.' }} {{ user.nombre if user else 'Usuario' }} {{ user.apellido if user else '' }}</span>
+                        <div class="user-avatar">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                            </svg>
+                        </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
+                        <div class="dropdown-header bg-primary text-white p-3 text-center">
+                            <div class="user-avatar mb-2 mx-auto">
+                                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                    <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                    <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                </svg>
+                            </div>
+                            <p class="mb-0 fw-bold">{{ 'Dr.' if user and user.genero == 'Masculino' else 'Dra.' }} {{ user.nombre if user else 'Usuario' }} {{ user.apellido if user else '' }}</p>
+                            <small>{{ user.tipo_usuario|title if user else 'Profesional' }}</small>
+                        </div>
+                        <a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-user fa-sm fa-fw me-2 text-primary"></i>
+                            Mi Perfil
+                        </a>
+                        <a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-cogs fa-sm fa-fw me-2 text-primary"></i>
+                            Configuración
+                        </a>
+                        <a class="dropdown-item py-2" href="#">
+                            <i class="fas fa-list fa-sm fa-fw me-2 text-primary"></i>
+                            Historial de Servicios
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item py-2" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-danger"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid px-4 pt-5 mt-4">
+        <!-- Welcome Banner -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center">
+                            <div class="mb-3 mb-lg-0">
+                                <h3 class="fw-bold mb-0">Bienvenid{{ 'o' if user and user.genero == 'Masculino' else 'a' }}, {{ 'Dr.' if user and user.genero == 'Masculino' else 'Dra.' }} {{ user.nombre if user else 'Usuario' }}</h3>
+                                <p class="mb-0 opacity-75">{{ moment().format('dddd, DD de MMMM de YYYY') if moment else 'Hoy' }}</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="availabilityToggle" checked>
+                                    <label class="form-check-label ms-2" for="availabilityToggle">
+                                        <span id="statusText" class="badge bg-success px-3 py-2">Disponible</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Boxes -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-primary">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Servicios Activos</h5>
+                        <p class="display-6 fw-bold text-primary mb-0">15</p>
+                        <div class="mt-2 text-muted small">
+                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>12%</span> desde el mes pasado
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-success">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Valoración</h5>
+                        <p class="display-6 fw-bold text-success mb-0">4.8</p>
+                        <div class="mt-2 text-muted small">
+                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>0.2</span> desde el mes pasado
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-warning">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Ingresos</h5>
+                        <p class="display-6 fw-bold text-warning mb-0">$2.8k</p>
+                        <div class="mt-2 text-muted small">
+                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>9%</span> desde el mes pasado
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center">
+                        <div class="icon-circle bg-info">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Nuevos Pacientes</h5>
+                        <p class="display-6 fw-bold text-info mb-0">18</p>
+                        <div class="mt-2 text-muted small">
+                            <span class="text-danger"><i class="fas fa-arrow-down me-1"></i>3%</span> desde el mes pasado
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Map Section -->
+            <div class="col-md-8 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold text-primary">
+                            <i class="fas fa-map-marked-alt me-2"></i>Mapa de Cobertura
+                        </h6>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="mapOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i>Opciones
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mapOptionsDropdown">
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-home me-2"></i>Centrar en mi ubicación</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Editar área de cobertura</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-users me-2"></i>Mostrar pacientes cercanos</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 position-relative">
+                        <div id="coverage-map" class="map-container"></div>
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <div class="btn-group-vertical shadow-sm">
+                                <button class="btn btn-white" id="zoomIn"><i class="fas fa-plus"></i></button>
+                                <button class="btn btn-white" id="zoomOut"><i class="fas fa-minus"></i></button>
+                            </div>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 m-3 bg-white rounded-pill px-3 py-2 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-map-pin text-primary me-2"></i>
+                                <span>Área de cobertura: <strong>10 km</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Requests -->
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold text-primary">
+                            <i class="fas fa-clipboard-list me-2"></i>Solicitudes Pendientes
+                        </h6>
+                        <span class="badge bg-danger px-3 py-2">1 Nueva</span>
+                    </div>
+                    <div class="card-body p-3 scrollable-card">
+                        <!-- New Request -->
+                        <div class="request-card new">
+                            <div class="request-badge position-absolute end-0 top-0 mt-3 me-3">
+                                <span class="badge bg-warning text-dark px-3 py-2">Nueva</span>
+                            </div>
+                            <div class="request-header d-flex mb-3">
+                                <div class="patient-avatar-sm me-3">
+                                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                        <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                            <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                    <h6 class="mb-0 fw-bold">María González</h6>
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span>Hace 5 minutos</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <span>1.2 km</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="request-details">
+                                <div class="mb-2">
+                                    <span class="badge bg-primary mb-2">Terapia Física</span>
+                                    <span class="badge bg-info mb-2">Presencial</span>
+                                    <span class="badge bg-secondary mb-2">Hoy, 15:30 hrs.</span>
+                                </div>
+                                <p class="small mb-0">
+                                    <i class="fas fa-quote-left text-primary me-1 small"></i>
+                                    Dolor lumbar tras lesión deportiva, requiere evaluación y tratamiento.
+                                    <i class="fas fa-quote-right text-primary ms-1 small"></i>
+                                </p>
+                            </div>
+                            <div class="request-actions d-flex mt-3">
+                                <button class="btn btn-success flex-grow-1 me-2">
+                                    <i class="fas fa-check me-md-2"></i><span class="d-none d-md-inline">Aceptar</span>
+                                </button>
+                                <button class="btn btn-danger flex-grow-1">
+                                    <i class="fas fa-times me-md-2"></i><span class="d-none d-md-inline">Rechazar</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scheduled Request -->
+                        <div class="request-card">
+                            <div class="request-badge position-absolute end-0 top-0 mt-3 me-3">
+                                <span class="badge bg-info px-3 py-2">Confirmado</span>
+                            </div>
+                            <div class="request-header d-flex mb-3">
+                                <div class="patient-avatar-sm me-3">
+                                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                        <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                            <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                    <h6 class="mb-0 fw-bold">Pedro Soto</h6>
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        <span>Programado</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        <span>3.5 km</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="request-details">
+                                <div class="mb-2">
+                                    <span class="badge bg-primary mb-2">Terapia Física</span>
+                                    <span class="badge bg-info mb-2">Presencial</span>
+                                    <span class="badge bg-secondary mb-2">Mañana, 10:00 hrs.</span>
+                                </div>
+                                <p class="small mb-0">
+                                    <i class="fas fa-quote-left text-primary me-1 small"></i>
+                                    Rehabilitación post quirúrgica de rodilla, segunda sesión.
+                                    <i class="fas fa-quote-right text-primary ms-1 small"></i>
+                                </p>
+                            </div>
+                            <div class="request-actions d-flex mt-3">
+                                <button class="btn btn-outline-primary flex-grow-1 me-2">
+                                    <i class="fas fa-comment-alt me-md-2"></i><span class="d-none d-md-inline">Chat</span>
+                                </button>
+                                <button class="btn btn-outline-secondary flex-grow-1">
+                                    <i class="fas fa-calendar-alt me-md-2"></i><span class="d-none d-md-inline">Reprogramar</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-pill px-4">
+                                Ver todas las solicitudes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Active Service -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white pt-3 pb-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-primary">
+                            <i class="fas fa-briefcase-medical me-2"></i>Servicio En Curso
+                        </h5>
+                        <span class="badge bg-success px-3 py-2 rounded-pill">En camino</span>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="active-service">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="patient-avatar-sm me-3">
+                                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="35" r="25" fill="#3a86ff"/>
+                                        <circle cx="50" cy="100" r="50" fill="#3a86ff"/>
+                                        <circle cx="50" cy="30" r="18" fill="#ffffff"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">María González</h6>
+                                    <div class="mt-1">
+                                        <span class="badge bg-primary-subtle text-primary">Terapia Física</span>
+                                        <span class="badge bg-info-subtle text-info">Presencial</span>
+                                    </div>
+                                </div>
+                                <div class="ms-auto">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <i class="fas fa-comment-alt me-1"></i>
+                                        <span>Chat</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="position-relative mb-4">
+                                <div id="service-map" class="map-container-sm rounded shadow-sm"></div>
+                                <div class="position-absolute bottom-0 start-0 m-3 bg-white rounded-pill px-3 py-2 shadow-sm">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-route text-primary me-2"></i>
+                                        <span>Tiempo estimado: <strong>15 min</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4 g-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-3 h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="icon-circle bg-danger text-white me-2">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </div>
+                                            <h6 class="mb-0 small fw-bold">Dirección</h6>
+                                        </div>
+                                        <p class="small mb-0">Av. Providencia 1234, Providencia</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-3 h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="icon-circle bg-primary text-white me-2">
+                                                <i class="fas fa-clock"></i>
+                                            </div>
+                                            <h6 class="mb-0 small fw-bold">Hora programada</h6>
+                                        </div>
+                                        <p class="small mb-0">Hoy, 15:30 hrs.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-3 h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="icon-circle bg-success text-white me-2">
+                                                <i class="fas fa-user-clock"></i>
+                                            </div>
+                                            <h6 class="mb-0 small fw-bold">Duración estimada</h6>
+                                        </div>
+                                        <p class="small mb-0">45 minutos</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="active-service-timeline mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="fw-bold small mb-0">Progreso del servicio</h6>
+                                    <span class="badge bg-primary-subtle text-primary px-3 py-2">2 de 4 pasos</span>
+                                </div>
+                                <div class="timeline">
+                                    <div class="timeline-item completed">
+                                        <div class="timeline-point"></div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="mb-0 small fw-bold">Solicitud aceptada</p>
+                                                <p class="text-muted mb-0 small">14:45 hrs.</p>
+                                            </div>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item active">
+                                        <div class="timeline-point"></div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="mb-0 small fw-bold">En camino</p>
+                                                <p class="text-muted mb-0 small">15:15 hrs.</p>
+                                            </div>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-point"></div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="mb-0 small fw-bold">Llegada al domicilio</p>
+                                                <p class="text-muted mb-0 small">Pendiente</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <div class="timeline-point"></div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="mb-0 small fw-bold">Servicio completado</p>
+                                                <p class="text-muted mb-0 small">Pendiente</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="active-service-actions d-grid gap-2">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary w-100">
+                                            <i class="fas fa-map-marker-alt me-2"></i> Iniciar navegación
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-success w-100">
+                                            <i class="fas fa-check-circle me-2"></i> Marcar llegada
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-danger">
+                                    <i class="fas fa-times-circle me-2"></i> Cancelar servicio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Services -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white pt-3 pb-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-primary">
+                            <i class="fas fa-history me-2"></i>Servicios Recientes
+                        </h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary me-2">
+                                <i class="fas fa-filter me-1"></i>Filtrar
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body scrollable-card" style="max-height: 400px; overflow-y: auto;">
+                        <div class="service-history">
+                            <div class="service-history-item p-3 border-bottom">
+                                <div class="d-flex align-items-center">
+                                    <div class="patient-avatar-sm me-3 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <h6 class="mb-0">María González</h6>
+                                                <span class="badge bg-info me-2">Fisioterapia</span>
+                                                <small class="text-muted">12 Jun 2023</small>
+                                            </div>
+                                            <span class="badge bg-success">Completado</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <small class="text-muted ms-1">5.0</small>
+                                            </div>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>Detalles
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="service-history-item p-3 border-bottom">
+                                <div class="d-flex align-items-center">
+                                    <div class="patient-avatar-sm me-3 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <h6 class="mb-0">Carlos Rodríguez</h6>
+                                                <span class="badge bg-primary me-2">Terapia Ocupacional</span>
+                                                <small class="text-muted">10 Jun 2023</small>
+                                            </div>
+                                            <span class="badge bg-success">Completado</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <small class="text-muted ms-1">4.0</small>
+                                            </div>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>Detalles
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="service-history-item p-3 border-bottom">
+                                <div class="d-flex align-items-center">
+                                    <div class="patient-avatar-sm me-3 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <div>
+                                                <h6 class="mb-0">Sofía Martinez</h6>
+                                                <span class="badge bg-warning text-dark me-2">Enfermería</span>
+                                                <small class="text-muted">5 Jun 2023</small>
+                                            </div>
+                                            <span class="badge bg-info">Programado</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small class="text-muted">Pendiente de calificación</small>
+                                            </div>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>Detalles
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-link text-primary">
+                                Ver todos los servicios <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted small">Mostrando últimos 7 servicios</span>
+                            <a href="#" class="btn btn-sm btn-link text-primary">Ver todos <i class="fas fa-arrow-right ms-1"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-nav">
+        <a href="{{ url_for('professional_dashboard') }}" class="mobile-nav-item active" id="pro-nav-home">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="{{ url_for('requests') }}" class="mobile-nav-item" id="pro-nav-requests">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Solicitudes</span>
+        </a>
+        <a href="{{ url_for('services') }}" class="mobile-nav-item" id="pro-nav-service">
+            <i class="fas fa-briefcase-medical"></i>
+            <span>Servicios</span>
+        </a>
+        <a href="{{ url_for('chat') }}" class="mobile-nav-item" id="pro-nav-chat">
+            <i class="fas fa-comment-alt"></i>
+            <span>Chat</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="mobile-nav-item" id="pro-nav-profile">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="professional.js"></script>
+    
+    <!-- Script para mensaje de bienvenida -->
+    {% if just_logged_in %}
+    <script src="{{ url_for('static', filename='js/welcome-toast.js') }}"></script>
+    {% endif %}
+</body>
+</html>
+
+
+
+

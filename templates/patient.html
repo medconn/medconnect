@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedConnect - Dashboard Paciente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/patient-styles.css') }}" rel="stylesheet">
+    <style>
+        /* Estilos para el mensaje de bienvenida */
+        .welcome-toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 350px;
+            animation: slideInRight 0.5s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .welcome-toast .toast-body {
+            background: linear-gradient(135deg, #5D3E8F 0%, #7B5FAF 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(93, 62, 143, 0.3);
+        }
+        
+        .welcome-avatar {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Mensaje de bienvenida temporal -->
+    {% if just_logged_in %}
+    <div class="welcome-toast" id="welcomeToast">
+        <div class="toast-body d-flex align-items-center">
+            <div class="welcome-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div>
+                <h5 class="mb-1">¡Bienvenid{{ 'a' if user and user.genero == 'Femenino' else 'o' }}!</h5>
+                <p class="mb-0">Hola {{ user.nombre if user else 'Usuario' }}, has iniciado sesión exitosamente</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MedConnect Logo">
+                MedConnect
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="dropdown">
+                    <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar me-2">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <span class="fw-medium">{{ user.nombre if user else 'Usuario' }} {{ user.apellido if user else '' }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                <i class="fas fa-user-circle me-2 text-primary"></i>
+                                Mi Perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="https://t.me/Medconn_bot" target="_blank">
+                                <i class="fab fa-telegram me-2 text-info"></i>
+                                Usar ChatBot
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2 text-danger"></i>
+                                Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div class="profile-avatar-large me-3">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <h1 class="mb-1">¡Hola, {{ user.nombre if user else 'Usuario' }}!</h1>
+                            <p class="text-muted mb-0">Bienvenid{{ 'a' if user and user.genero == 'Femenino' else 'o' }} a tu panel de salud</p>
+                            {% if user and user.ultimo_acceso %}
+                            <small class="text-muted">Último acceso: {{ user.ultimo_acceso[:10] if user.ultimo_acceso else 'Primera vez' }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="stat-card-mini text-center">
+                                <div class="stat-icon-mini bg-primary text-white mx-auto mb-1">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="fw-medium" id="consultations-count">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Citas</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card-mini text-center">
+                                <div class="stat-icon-mini bg-success text-white mx-auto mb-1">
+                                    <i class="fas fa-pills"></i>
+                                </div>
+                                <div class="fw-medium" id="medications-count">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Medicinas</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-card-mini text-center">
+                                <div class="stat-icon-mini bg-danger text-white mx-auto mb-1">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="fw-medium" id="health-score">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Salud</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Acciones Rápidas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="mb-3">Acciones Rápidas</h3>
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="https://t.me/Medconn_bot" target="_blank" class="action-btn-enhanced primary">
+                            <i class="fab fa-telegram-plane"></i>
+                            <h5>ChatBot</h5>
+                            <p>Consulta inmediata</p>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="action-btn-enhanced accent" onclick="scheduleAppointment()">
+                            <i class="fas fa-calendar-plus"></i>
+                            <h5>Agendar Cita</h5>
+                            <p>Nueva consulta</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="action-btn-enhanced" onclick="viewReports()">
+                            <i class="fas fa-file-medical"></i>
+                            <h5>Mis Reportes</h5>
+                            <p>Ver historial</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="action-btn-enhanced danger" onclick="callEmergency()">
+                            <i class="fas fa-phone"></i>
+                            <h5>Emergencia</h5>
+                            <p>Llamar ahora</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Información -->
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="patientTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                            <i class="fas fa-history"></i>
+                            Historial Médico
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="medications-tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab">
+                            <i class="fas fa-pills"></i>
+                            Medicamentos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="exams-tab" data-bs-toggle="tab" data-bs-target="#exams" type="button" role="tab">
+                            <i class="fas fa-vial"></i>
+                            Exámenes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="family-tab" data-bs-toggle="tab" data-bs-target="#family" type="button" role="tab">
+                            <i class="fas fa-users"></i>
+                            Familia
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="telegram-tab" data-bs-toggle="tab" data-bs-target="#telegram" type="button" role="tab">
+                            <i class="fab fa-telegram-plane"></i>
+                            Integración con Telegram
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="patientTabsContent">
+                    <!-- Historial Médico -->
+                    <div class="tab-pane fade show active" id="history" role="tabpanel">
+                        <div id="consultations-loading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando consultas...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando historial médico...</p>
+                        </div>
+                        <div id="consultations-container"></div>
+                        <div id="consultations-empty" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tienes consultas registradas</h5>
+                            <p class="text-muted">Agenda tu primera consulta o registra una consulta pasada</p>
+                            <button class="btn btn-primary mt-2" onclick="scheduleAppointment()">
+                                <i class="fas fa-plus me-2"></i>Agendar Consulta
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Medicamentos -->
+                    <div class="tab-pane fade" id="medications" role="tabpanel">
+                        <div id="medications-loading" class="text-center py-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando medicamentos...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando medicamentos...</p>
+                        </div>
+                        <div id="medications-container"></div>
+                        <div id="medications-empty" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-pills fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tienes medicamentos registrados</h5>
+                            <p class="text-muted">Registra tus medicamentos para un mejor seguimiento</p>
+                            <button class="btn btn-primary mt-2" onclick="addMedication()">
+                                <i class="fas fa-plus me-2"></i>Agregar Medicamento
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exámenes -->
+                    <div class="tab-pane fade" id="exams" role="tabpanel">
+                        <div id="exams-loading" class="text-center py-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando exámenes...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando exámenes...</p>
+                        </div>
+                        <div id="exams-container"></div>
+                        <div id="exams-empty" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-vial fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tienes exámenes registrados</h5>
+                            <p class="text-muted">Registra tus exámenes médicos para mantener un historial completo</p>
+                            <button class="btn btn-primary mt-2" onclick="addExam()">
+                                <i class="fas fa-plus me-2"></i>Registrar Examen
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Familia -->
+                    <div class="tab-pane fade" id="family" role="tabpanel">
+                        <div id="family-loading" class="text-center py-4" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando familiares...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando contactos familiares...</p>
+                        </div>
+                        <div id="family-container"></div>
+                        <div id="family-empty" class="text-center py-5" style="display: none;">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tienes familiares registrados</h5>
+                            <p class="text-muted">Agrega contactos familiares para notificaciones de emergencia</p>
+                            <button class="btn btn-primary mt-2" onclick="addFamilyMember()">
+                                <i class="fas fa-plus me-2"></i>Agregar Familiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Telegram Integration -->
+                    <div class="tab-pane fade" id="telegram" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fab fa-telegram-plane me-2"></i>
+                                    Integración con Telegram
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="telegram-status">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Verificando estado...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Verificando vinculación con Telegram...</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- No vinculado -->
+                                <div id="telegram-not-linked" style="display: none;">
+                                    <div class="text-center mb-4">
+                                        <i class="fab fa-telegram-plane fa-4x text-muted mb-3"></i>
+                                        <h5>Conecta tu cuenta de Telegram</h5>
+                                        <p class="text-muted">
+                                            Vincula tu cuenta para registrar información médica directamente desde Telegram
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            ¿Cómo vincular tu cuenta?
+                                        </h6>
+                                        <ol class="mb-3">
+                                            <li>Abre Telegram y busca <strong>@medconnect_bot</strong></li>
+                                            <li>Envía el comando <code>/start</code></li>
+                                            <li>Tu ID de Telegram aparecerá en la respuesta del bot</li>
+                                            <li>Copia ese ID y pégalo en el campo de abajo</li>
+                                        </ol>
+                                        <p class="mb-0"><strong>Nota:</strong> Tu ID de Telegram es un número único que comienza por ejemplo: 1071410995</p>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label for="telegram-id-input" class="form-label">ID de Telegram</label>
+                                            <input type="text" class="form-control" id="telegram-id-input" 
+                                                   placeholder="Ej: 1071410995" 
+                                                   pattern="[0-9]+" 
+                                                   title="Solo números">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button class="btn btn-primary w-100" onclick="linkTelegramAccount()">
+                                                <i class="fas fa-link me-2"></i>Vincular
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Vinculado -->
+                                <div id="telegram-linked" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <h6 class="alert-heading">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            ¡Cuenta vinculada exitosamente!
+                                        </h6>
+                                        <p class="mb-2">Tu cuenta está conectada con Telegram</p>
+                                        <p class="mb-0"><strong>ID:</strong> <span id="linked-telegram-id"></span></p>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card border-primary">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                                                    <h6>Bot de Telegram</h6>
+                                                    <p class="text-muted small mb-2">Registra información desde Telegram</p>
+                                                    <a href="https://t.me/medconnect_bot" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fab fa-telegram-plane me-1"></i>Abrir Bot
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card border-info">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-vial fa-2x text-info mb-2"></i>
+                                                    <h6>Datos Sincronizados</h6>
+                                                    <p class="text-muted small mb-2">Exámenes registrados por el bot</p>
+                                                    <span class="badge bg-info" id="bot-exams-count">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <h6>¿Cómo usar el bot?</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Escribe <code>examen</code> para registrar un examen</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Proporciona los datos separados por comas</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Los datos aparecerán automáticamente aquí</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-danger btn-sm" onclick="unlinkTelegramAccount()">
+                                            <i class="fas fa-unlink me-1"></i>Desvincular cuenta
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 mt-4">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <p class="mb-0">
+                        <a href="#" class="me-3">Términos</a>
+                        <a href="#" class="me-3">Privacidad</a>
+                        <a href="#" class="me-3">Soporte</a>
+                        <span class="text-muted">© 2024 MedConnect</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/patient.js') }}"></script>
+    
+    <!-- Script del usuario -->
+    <script>
+        // Pasar ID del usuario al JavaScript
+        window.currentUserId = {% if user and user.id %}{{ user.id }}{% else %}null{% endif %};
+    </script>
+    
+    <!-- Script para mensaje de bienvenida -->
+    {% if just_logged_in %}
+    <script src="{{ url_for('static', filename='js/welcome-toast.js') }}"></script>
+    {% endif %}
+</body>
+</html>
+
+

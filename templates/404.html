@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página no encontrada - MedConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            color: #5D3E8F;
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .error-message {
+            font-size: 2rem;
+            color: #333;
+            margin: 1rem 0;
+        }
+        
+        .error-description {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1rem;
+            max-width: 600px;
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #666;
+            max-width: 600px;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-primary {
+            background-color: #5D3E8F;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background-color: #4A2E7A;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: #5D3E8F;
+            padding: 1rem 2rem;
+            border: 2px solid #5D3E8F;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5D3E8F;
+            color: white;
+        }
+        
+        .medical-icon {
+            font-size: 4rem;
+            color: #5D3E8F;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+            
+            .error-message {
+                font-size: 1.5rem;
+            }
+            
+            .error-description {
+                font-size: 1rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MedConnect Logo">
+                    <span>MedConnect</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="error-container">
+            <div class="medical-icon">🏥</div>
+            <h1 class="error-code">404</h1>
+            <h2 class="error-message">Página no encontrada</h2>
+            <p class="error-description">
+                Lo sentimos, la página que está buscando no existe o ha sido movida. 
+                Esto puede ocurrir después de cerrar sesión o si hay un problema con la URL.
+            </p>
+            
+            <div class="debug-info">
+                <strong>Información de depuración:</strong><br>
+                URL solicitada: {{ request.url if request else 'N/A' }}<br>
+                Método: {{ request.method if request else 'N/A' }}<br>
+                Hora: {{ moment().format('YYYY-MM-DD HH:mm:ss') if moment else 'N/A' }}<br>
+                Sesión activa: {{ 'Sí' if session.get('user_id') else 'No' }}
+            </div>
+            
+            <div class="error-actions">
+                <a href="{{ url_for('index') }}" class="btn-primary">
+                    🏠 Ir al Inicio
+                </a>
+                {% if session.get('user_id') %}
+                    {% if session.get('user_type') == 'paciente' %}
+                        <a href="{{ url_for('patient_dashboard') }}" class="btn-secondary">
+                            👤 Mi Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('professional_dashboard') }}" class="btn-secondary">
+                            👨‍⚕️ Dashboard Profesional
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-secondary">
+                        🔐 Iniciar Sesión
+                    </a>
+                {% endif %}
+                <a href="javascript:history.back()" class="btn-secondary">
+                    ← Volver Atrás
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer style="margin-top: auto; padding: 2rem; text-align: center; background-color: #f8f9fa; color: #666;">
+        <p>&copy; 2024 MedConnect. Todos los derechos reservados.</p>
+        <p>Si el problema persiste, contacte a nuestro equipo de soporte.</p>
+    </footer>
+</body>
+</html> 

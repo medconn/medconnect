@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedConnect - Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="professional-styles.css">
+    <style>
+        .chat-container {
+            display: flex;
+            height: calc(100vh - 150px);
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .chat-sidebar {
+            width: 350px;
+            border-right: 1px solid var(--gray-200);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .chat-sidebar-search {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .chat-item:hover {
+            background-color: var(--gray-100);
+        }
+        
+        .chat-item.active {
+            background-color: rgba(93, 62, 143, 0.05);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .chat-item-avatar {
+            position: relative;
+            margin-right: 15px;
+        }
+        
+        .online-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: #28a745;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid white;
+        }
+        
+        .chat-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .chat-item-name {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .chat-item-name h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .chat-item-message {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .chat-item-message p {
+            margin: 0;
+            color: var(--gray-600);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.85rem;
+        }
+        
+        .chat-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+        }
+        
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: white;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            max-width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message.received {
+            align-self: flex-start;
+        }
+        
+        .message.sent {
+            align-self: flex-end;
+        }
+        
+        .message-content {
+            padding: 12px 15px;
+            border-radius: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .message.received .message-content {
+            background-color: white;
+            border-top-left-radius: 5px;
+        }
+        
+        .message.sent .message-content {
+            background-color: var(--primary-color);
+            color: white;
+            border-top-right-radius: 5px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-top: 5px;
+            align-self: flex-end;
+        }
+        
+        .message.received .message-time {
+            align-self: flex-start;
+        }
+        
+        .chat-input {
+            padding: 15px 20px;
+            background-color: white;
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .chat-input-form {
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-input-form .form-control {
+            border-radius: 25px;
+            padding-right: 100px;
+        }
+        
+        .chat-input-actions {
+            margin-left: 10px;
+            display: flex;
+        }
+        
+        .chat-input-actions button {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+        }
+        
+        @media (max-width: 767.98px) {
+            .chat-container {
+                flex-direction: column;
+                height: calc(100vh - 140px);
+            }
+            
+            .chat-sidebar {
+                width: 100%;
+                height: 250px;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            
+            .chat-content {
+                height: calc(100vh - 390px);
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 fixed-top shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="images/logo.png" alt="MedConnect Logo" height="35" class="me-2">
+                <span class="fw-bold">MedConnect</span>
+            </a>
+            
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown no-arrow mx-1">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell fa-fw"></i>
+                        <span class="badge badge-counter bg-danger">3</span>
+                    </a>
+                    <div class="dropdown-list dropdown-menu dropdown-menu-end shadow" aria-labelledby="alertsDropdown">
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-bell me-2"></i> Notificaciones
+                        </h6>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                            <div class="icon-circle bg-primary">
+                                <i class="fas fa-user-clock text-white"></i>
+                            </div>
+                            <div>
+                                <div class="small text-gray-500">Hace 5 minutos</div>
+                                <span class="fw-semibold">Nueva solicitud de atención de María González</span>
+                            </div>
+                        </a>
+                        <a class="dropdown-item text-center small text-primary fw-bold py-3" href="#">Ver todas las notificaciones</a>
+                    </div>
+                </li>
+                
+                <li class="nav-item dropdown no-arrow mx-1">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-envelope fa-fw"></i>
+                        <span class="badge badge-counter bg-danger">7</span>
+                    </a>
+                    <div class="dropdown-list dropdown-menu dropdown-menu-end shadow" aria-labelledby="messagesDropdown">
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-envelope me-2"></i> Mensajes
+                        </h6>
+                        <a class="dropdown-item d-flex align-items-center" href="#">
+                            <div class="patient-avatar-sm me-3 d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">María González</div>
+                                <div class="text-truncate">Hola Dr. Carlos, ¿en cuánto tiempo llegaría a mi domicilio?</div>
+                                <div class="small text-muted"><i class="fas fa-clock me-1"></i> Hace 5 minutos</div>
+                            </div>
+                        </a>
+                        <a class="dropdown-item text-center small text-primary fw-bold py-3" href="#">Ver todos los mensajes</a>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown no-arrow">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <span class="d-none d-lg-inline text-gray-600 small me-2">Dr. Carlos Mendoza</span>
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
+                        <a class="dropdown-item py-2" href="profile.html">
+                            <i class="fas fa-user fa-sm fa-fw me-2 text-primary"></i>
+                            Mi Perfil
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item py-2" href="index.html">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-danger"></i>
+                            Cerrar Sesión
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid px-4 pt-5 mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-primary text-white border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center">
+                            <div>
+                                <h3 class="fw-bold mb-0">Mensajes</h3>
+                                <p class="mb-0 opacity-75">Comunícate con tus pacientes</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-light">
+                                    <i class="fas fa-cog me-2"></i>Configuración
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="chat-container">
+                            <!-- Chat Sidebar -->
+                            <div class="chat-sidebar">
+                                <div class="chat-sidebar-header">
+                                    <h5 class="mb-0">Conversaciones</h5>
+                                </div>
+                                <div class="chat-sidebar-search">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="Buscar contacto...">
+                                        <button class="btn btn-outline-secondary" type="button">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chat-list">
+                                    <div class="chat-item active">
+                                        <div class="chat-item-avatar">
+                                            <div class="patient-avatar-sm d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="online-indicator"></div>
+                                        </div>
+                                        <div class="chat-item-info">
+                                            <div class="chat-item-name">
+                                                <h6>María González</h6>
+                                                <small class="text-muted">10:45</small>
+                                            </div>
+                                            <div class="chat-item-message">
+                                                <p>Hola Dr. Carlos, ¿en cuánto tiempo llegaría a mi domicilio?</p>
+                                                <span class="badge rounded-pill bg-primary ms-2">1</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-item">
+                                        <div class="chat-item-avatar">
+                                            <div class="patient-avatar-sm d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                        <div class="chat-item-info">
+                                            <div class="chat-item-name">
+                                                <h6>Pedro Soto</h6>
+                                                <small class="text-muted">Ayer</small>
+                                            </div>
+                                            <div class="chat-item-message">
+                                                <p>¿Podemos reagendar mi sesión para mañana en la tarde?</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-item">
+                                        <div class="chat-item-avatar">
+                                            <div class="patient-avatar-sm d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                        <div class="chat-item-info">
+                                            <div class="chat-item-name">
+                                                <h6>Sofía Martínez</h6>
+                                                <small class="text-muted">03/06</small>
+                                            </div>
+                                            <div class="chat-item-message">
+                                                <p>Gracias por la sesión, me sentí muy bien.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chat-item">
+                                        <div class="chat-item-avatar">
+                                            <div class="patient-avatar-sm d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                        </div>
+                                        <div class="chat-item-info">
+                                            <div class="chat-item-name">
+                                                <h6>Carlos Rodríguez</h6>
+                                                <small class="text-muted">01/06</small>
+                                            </div>
+                                            <div class="chat-item-message">
+                                                <p>Le agradezco mucho por su profesionalismo.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Content -->
+                            <div class="chat-content">
+                                <div class="chat-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="chat-item-avatar">
+                                            <div class="patient-avatar-sm d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="online-indicator"></div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">María González</h6>
+                                            <small class="text-muted">En línea</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-phone"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-video"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-messages">
+                                    <div class="message received">
+                                        <div class="message-content">
+                                            Hola Dr. Carlos, tengo una consulta sobre mi rehabilitación.
+                                        </div>
+                                        <span class="message-time">10:30</span>
+                                    </div>
+                                    
+                                    <div class="message sent">
+                                        <div class="message-content">
+                                            Hola María, cuéntame ¿en qué puedo ayudarte?
+                                        </div>
+                                        <span class="message-time">10:32</span>
+                                    </div>
+                                    
+                                    <div class="message received">
+                                        <div class="message-content">
+                                            Tengo un poco de dolor en la pierna después de los ejercicios que me indicó. Es normal?
+                                        </div>
+                                        <span class="message-time">10:35</span>
+                                    </div>
+                                    
+                                    <div class="message sent">
+                                        <div class="message-content">
+                                            Es normal sentir un poco de molestia, pero no debe ser un dolor intenso. ¿Podrías describir la intensidad del dolor?
+                                        </div>
+                                        <span class="message-time">10:37</span>
+                                    </div>
+                                    
+                                    <div class="message received">
+                                        <div class="message-content">
+                                            No es muy intenso, es más como una fatiga muscular, pero quería confirmar.
+                                        </div>
+                                        <span class="message-time">10:40</span>
+                                    </div>
+                                    
+                                    <div class="message received">
+                                        <div class="message-content">
+                                            También quería consultar, ¿en cuánto tiempo llegaría a mi domicilio para la sesión de mañana?
+                                        </div>
+                                        <span class="message-time">10:45</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="chat-input">
+                                    <div class="chat-input-form">
+                                        <div class="position-relative flex-grow-1">
+                                            <input type="text" class="form-control" placeholder="Escribe un mensaje...">
+                                            <div class="position-absolute top-50 end-0 translate-middle-y me-3">
+                                                <button class="btn btn-link text-muted p-0">
+                                                    <i class="fas fa-paperclip"></i>
+                                                </button>
+                                                <button class="btn btn-link text-muted p-0 ms-2">
+                                                    <i class="fas fa-smile"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="chat-input-actions">
+                                            <button class="btn btn-primary">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-nav">
+        <a href="professional.html" class="mobile-nav-item" id="pro-nav-home">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="requests.html" class="mobile-nav-item" id="pro-nav-requests">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Solicitudes</span>
+        </a>
+        <a href="services.html" class="mobile-nav-item" id="pro-nav-service">
+            <i class="fas fa-briefcase-medical"></i>
+            <span>Servicios</span>
+        </a>
+        <a href="chat.html" class="mobile-nav-item active" id="pro-nav-chat">
+            <i class="fas fa-comment-alt"></i>
+            <span>Chat</span>
+        </a>
+        <a href="profile.html" class="mobile-nav-item" id="pro-nav-profile">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple script to make chat items clickable
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatItems = document.querySelectorAll('.chat-item');
+            
+            chatItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    chatItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

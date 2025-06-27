@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - MedConnect</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .login-container {
+            max-width: 450px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(93, 62, 143, 0.15);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+        }
+
+        .login-header h1 {
+            color: #5D3E8F;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 1.2em;
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #5D3E8F;
+            box-shadow: 0 0 0 4px rgba(93, 62, 143, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle button {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 5px;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #5D3E8F 0%, #7B5FAF 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.4em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(93, 62, 143, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+        }
+
+        .form-footer a {
+            color: #5D3E8F;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: inline-block;
+            margin: 5px 15px;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .register-link {
+            background: #f8f6ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .register-link p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .register-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #5D3E8F;
+            border: 2px solid #5D3E8F;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .register-btn:hover {
+            background: #5D3E8F;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .remember-me input {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .remember-me label {
+            margin: 0;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        /* Animación de carga */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 50px 20px;
+                padding: 30px 25px;
+            }
+
+            .login-header h1 {
+                font-size: 2.2em;
+            }
+        }
+
+        .welcome-back {
+            background: linear-gradient(135deg, #5D3E8F 0%, #7B5FAF 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-back h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+        }
+
+        .welcome-back p {
+            margin: 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MedConnect Logo">
+            <h1>MedConnect</h1>
+            <p>Tu salud, nuestra prioridad</p>
+        </div>
+
+        {% if show_welcome %}
+        <div class="welcome-back">
+            <h2>¡Bienvenido de vuelta! 👋</h2>
+            <p>Nos alegra verte de nuevo</p>
+        </div>
+        {% endif %}
+
+        {% if message %}
+            <div class="alert {{ 'alert-success' if success else 'alert-error' }}">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <form id="loginForm" method="POST">
+            <div class="form-group">
+                <label for="email">📧 Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Ingresa tu email"
+                       value="{{ request.form.email if request.form.email }}">
+            </div>
+
+            <div class="form-group">
+                <label for="password">🔒 Contraseña</label>
+                <div class="password-toggle">
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Ingresa tu contraseña">
+                    <button type="button" onclick="togglePassword()">👁️</button>
+                </div>
+            </div>
+
+            <div class="remember-me">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">Recordarme</label>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="form-footer">
+            <a href="#" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div class="register-link">
+            <p>¿No tienes cuenta aún?</p>
+            <a href="{{ url_for('register') }}" class="register-btn">Crear Cuenta Gratis</a>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = passwordInput.nextElementSibling;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        function showForgotPassword() {
+            alert('Para recuperar tu contraseña, contacta al administrador del sistema.\n\nEmail: soporte@medconnect.cl\nTeléfono: +56 2 1234 5678');
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!email || !password) {
+                alert('Por favor completa todos los campos');
+                e.preventDefault();
+                return;
+            }
+            
+            // Mostrar estado de carga
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="loading"></span>Iniciando sesión...';
+        });
+
+        // Auto-focus en el primer campo
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email').focus();
+        });
+
+        // Manejar Enter en los campos
+        document.getElementById('email').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('password').focus();
+            }
+        });
+
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').submit();
+            }
+        });
+    </script>
+</body>
+</html> 
